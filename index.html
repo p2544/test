@@ -178,7 +178,7 @@
 <body>
 
 <div id="title">🎮 TANK BATTLE</div>
-<div id="subtitle">CLASSIC ARCADE 1985 &nbsp;|&nbsp; v1.2</div>
+<div id="subtitle">CLASSIC ARCADE 1985 &nbsp;|&nbsp; v1.3</div>
 
 <div id="gameWrapper">
   <div id="canvasContainer">
@@ -997,7 +997,7 @@ function drawTank(tank, isPlayer) {
   ctx.save();
   ctx.translate(x + tank.w / 2, y + tank.h / 2);
   const angles = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
-  ctx.rotate(angles[dir] - angles[0] + (dir === DIR.UP ? 0 : dir === DIR.RIGHT ? Math.PI / 2 : dir === DIR.DOWN ? Math.PI : -Math.PI / 2));
+  ctx.rotate(angles[dir]);
 
   const hw = tank.w / 2, hh = tank.h / 2;
 
