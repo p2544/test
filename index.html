@@ -178,7 +178,7 @@
 <body>
 
 <div id="title">🎮 TANK BATTLE</div>
-<div id="subtitle">CLASSIC ARCADE 1985 &nbsp;|&nbsp; v1.4</div>
+<div id="subtitle">CLASSIC ARCADE 1985 &nbsp;|&nbsp; v1.5</div>
 
 <div id="gameWrapper">
   <div id="canvasContainer">
@@ -290,7 +290,8 @@ canvas.height = H;
 let gameState = 'menu'; // menu, playing, paused, gameover, levelclear
 let score = 0;
 let hiScore = 0;
-let lives = 3;
+let lives = 5;
+let levelWon = false;
 let level = 1;
 let map = Array.from({length: ROWS}, () => Array(COLS).fill(T.EMPTY));
 let player = null;
@@ -615,7 +616,7 @@ function moveBullet(b) {
         explosions.push(createExplosion(cx * CELL - 10, cy * CELL - 10, true));
         b.active = false;
         playSound('explosion');
-        gameOver();
+        showGameOver(true);
       }
       return;
     }
@@ -800,13 +801,16 @@ function loseLife() {
   lives--;
   updateHUD();
   if (lives <= 0) {
-    gameOver();
+    showGameOver(false);
   } else {
-    // Respawn player after delay
     player = null;
     playerInvincible = 0;
     setTimeout(() => {
-      if (gameState === 'playing') {
+      if (gameState !== 'playing') return;
+      if (levelWon) {
+        // enemies already cleared while player was dying — go to next level
+        showLevelClear();
+      } else {
         player = createPlayer();
         playerInvincible = 180;
       }
@@ -814,35 +818,49 @@ function loseLife() {
   }
 }
 
-function gameOver() {
+function showLevelClear() {
   gameState = 'gameover';
-  if (score > hiScore) {
-    hiScore = score;
-    document.getElementById('hiScore').textContent = hiScore;
-  }
+  if (score > hiScore) { hiScore = score; document.getElementById('hiScore').textContent = hiScore; }
+  setTimeout(() => {
+    level++;
+    document.getElementById('levelValue').textContent = level;
+    const overlay = document.getElementById('overlay');
+    overlay.style.display = 'flex';
+    document.getElementById('overlayTitle').textContent = 'LEVEL CLEAR!';
+    document.getElementById('overlayTitle').style.color = '#44FF44';
+    document.getElementById('overlayMsg').textContent = `ผ่านด่าน ${level - 1}! เหลือ ${lives} ชีวิต`;
+    document.getElementById('finalScore').style.display = 'block';
+    document.getElementById('finalScore').textContent = `SCORE: ${score}`;
+    document.getElementById('startBtn').textContent = `▶ LEVEL ${level}`;
+  }, 800);
+}
+
+function showGameOver(baseDead) {
+  gameState = 'gameover';
+  if (score > hiScore) { hiScore = score; document.getElementById('hiScore').textContent = hiScore; }
   setTimeout(() => {
     const overlay = document.getElementById('overlay');
     overlay.style.display = 'flex';
-    document.getElementById('overlayTitle').textContent = baseAlive ? 'LEVEL CLEAR!' : 'GAME OVER';
-    document.getElementById('overlayTitle').style.color = baseAlive ? '#44FF44' : '#FF4444';
-    document.getElementById('overlayMsg').textContent = baseAlive ? `ผ่านด่าน ${level}!` : 'ฐานทัพถูกทำลาย!';
+    document.getElementById('overlayTitle').textContent = 'GAME OVER';
+    document.getElementById('overlayTitle').style.color = '#FF4444';
+    document.getElementById('overlayMsg').textContent = baseDead ? 'ฐานทัพถูกทำลาย!' : 'หมดชีวิตแล้ว!';
     document.getElementById('finalScore').style.display = 'block';
     document.getElementById('finalScore').textContent = `SCORE: ${score}`;
-    document.getElementById('startBtn').textContent = baseAlive ? `▶ LEVEL ${level + 1}` : '▶ TRY AGAIN';
-    if (baseAlive) {
-      level++;
-      document.getElementById('levelValue').textContent = level;
-    }
-  }, 1000);
+    document.getElementById('startBtn').textContent = '▶ TRY AGAIN';
+  }, 800);
 }
 
 // ===== CHECK WIN =====
 function checkWin() {
+  if (levelWon) return;
   const totalEnemies = 4 + level * 2;
   if (spawnedCount >= totalEnemies && enemies.filter(e => e.active).length === 0) {
-    gameState = 'levelclear';
-    baseAlive = true;
-    gameOver();
+    levelWon = true;
+    if (player) {
+      // Player alive — show level clear now
+      showLevelClear();
+    }
+    // If player is null (respawning), loseLife's setTimeout will call showLevelClear
   }
 }
 
@@ -1169,6 +1187,12 @@ function updateEnemyIcons() {
 
 // ===== SOUND =====
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let explosionBuffer = null;
+fetch('explosion.mp3')
+  .then(r => r.arrayBuffer())
+  .then(ab => audioCtx.decodeAudioData(ab))
+  .then(buf => { explosionBuffer = buf; })
+  .catch(() => {});
 
 function playSound(type) {
   try {
@@ -1188,45 +1212,41 @@ function playSound(type) {
         break;
       }
       case 'explosion': {
-        const dur = 0.7;
-        // Layer 1: white noise burst (main impact)
-        const bufSize = audioCtx.sampleRate * dur;
-        const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
-        const data = buf.getChannelData(0);
-        for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1);
-        const noise = audioCtx.createBufferSource();
-        noise.buffer = buf;
-        const noiseGain = audioCtx.createGain();
-        const noiseFilter = audioCtx.createBiquadFilter();
-        noiseFilter.type = 'lowpass';
-        noiseFilter.frequency.setValueAtTime(1200, t);
-        noiseFilter.frequency.exponentialRampToValueAtTime(200, t + dur);
-        noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(audioCtx.destination);
-        noiseGain.gain.setValueAtTime(1.0, t);
-        noiseGain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-        noise.start(t); noise.stop(t + dur);
-
-        // Layer 2: low bass thud
-        const bass = audioCtx.createOscillator();
-        const bassGain = audioCtx.createGain();
-        bass.connect(bassGain); bassGain.connect(audioCtx.destination);
-        bass.type = 'sine';
-        bass.frequency.setValueAtTime(120, t);
-        bass.frequency.exponentialRampToValueAtTime(40, t + 0.4);
-        bassGain.gain.setValueAtTime(0.8, t);
-        bassGain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-        bass.start(t); bass.stop(t + 0.4);
-
-        // Layer 3: high crackle
-        const crackle = audioCtx.createOscillator();
-        const crackleGain = audioCtx.createGain();
-        crackle.connect(crackleGain); crackleGain.connect(audioCtx.destination);
-        crackle.type = 'sawtooth';
-        crackle.frequency.setValueAtTime(300, t);
-        crackle.frequency.exponentialRampToValueAtTime(60, t + 0.2);
-        crackleGain.gain.setValueAtTime(0.4, t);
-        crackleGain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-        crackle.start(t); crackle.stop(t + 0.2);
+        if (explosionBuffer) {
+          const src = audioCtx.createBufferSource();
+          src.buffer = explosionBuffer;
+          const g = audioCtx.createGain();
+          g.gain.setValueAtTime(0.9, t);
+          src.connect(g); g.connect(audioCtx.destination);
+          src.start(t);
+        } else {
+          // Fallback synthesized explosion
+          const dur = 0.7;
+          const bufSize = audioCtx.sampleRate * dur;
+          const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+          const data = buf.getChannelData(0);
+          for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1);
+          const noise = audioCtx.createBufferSource();
+          noise.buffer = buf;
+          const noiseGain = audioCtx.createGain();
+          const noiseFilter = audioCtx.createBiquadFilter();
+          noiseFilter.type = 'lowpass';
+          noiseFilter.frequency.setValueAtTime(1200, t);
+          noiseFilter.frequency.exponentialRampToValueAtTime(200, t + dur);
+          noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(audioCtx.destination);
+          noiseGain.gain.setValueAtTime(1.0, t);
+          noiseGain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+          noise.start(t); noise.stop(t + dur);
+          const bass = audioCtx.createOscillator();
+          const bassGain = audioCtx.createGain();
+          bass.connect(bassGain); bassGain.connect(audioCtx.destination);
+          bass.type = 'sine';
+          bass.frequency.setValueAtTime(120, t);
+          bass.frequency.exponentialRampToValueAtTime(40, t + 0.4);
+          bassGain.gain.setValueAtTime(0.8, t);
+          bassGain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+          bass.start(t); bass.stop(t + 0.4);
+        }
         break;
       }
       case 'metal': {
@@ -1271,16 +1291,18 @@ function gameLoop(timestamp) {
 function startGame() {
   audioCtx.resume();
 
+  // TRY AGAIN = full reset; LEVEL CLEAR = keep lives/score
   if (gameState === 'gameover') {
-    if (!baseAlive) {
-      // Real game over — reset
+    const isTryAgain = document.getElementById('startBtn').textContent.includes('TRY AGAIN');
+    if (isTryAgain) {
       score = 0;
-      lives = 3;
+      lives = 5;
       level = 1;
     }
   }
 
   baseAlive = true;
+  levelWon = false;
   gameState = 'playing';
   paused = false;
   enemies = [];
