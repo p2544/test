@@ -178,7 +178,7 @@
 <body>
 
 <div id="title">🎮 TANK BATTLE</div>
-<div id="subtitle">CLASSIC ARCADE 1985 &nbsp;|&nbsp; v1.6</div>
+<div id="subtitle">CLASSIC ARCADE 1985 &nbsp;|&nbsp; v1.7</div>
 
 <div id="gameWrapper">
   <div id="canvasContainer">
@@ -573,7 +573,7 @@ function moveBullet(b) {
   if (b.x < 0 || b.y < 0 || b.x + b.w > W || b.y + b.h > H) {
     explosions.push(createExplosion(b.x, b.y, false));
     b.active = false;
-    if (b.owner === 'player') player.bulletCount = Math.max(0, player.bulletCount - 1);
+    if (b.owner === 'player' && player) player.bulletCount = Math.max(0, player.bulletCount - 1);
     return;
   }
 
@@ -599,13 +599,13 @@ function moveBullet(b) {
         }
       }
       b.active = false;
-      if (b.owner === 'player') player.bulletCount = Math.max(0, player.bulletCount - 1);
+      if (b.owner === 'player' && player) player.bulletCount = Math.max(0, player.bulletCount - 1);
       return;
     }
     if (tile === T.STEEL) {
       explosions.push(createExplosion(cx * CELL, cy * CELL, false));
       b.active = false;
-      if (b.owner === 'player') player.bulletCount = Math.max(0, player.bulletCount - 1);
+      if (b.owner === 'player' && player) player.bulletCount = Math.max(0, player.bulletCount - 1);
       playSound('metal');
       return;
     }
@@ -646,7 +646,7 @@ function moveBullet(b) {
           playSound('metal');
         }
         b.active = false;
-        player.bulletCount = Math.max(0, player.bulletCount - 1);
+        if (player) player.bulletCount = Math.max(0, player.bulletCount - 1);
         return;
       }
     }
@@ -662,7 +662,7 @@ function moveBullet(b) {
         loseLife();
       } else {
         b.active = false;
-        player.bulletCount = Math.max(0, player.bulletCount - 1);
+        if (player) player.bulletCount = Math.max(0, player.bulletCount - 1);
       }
     }
   }
@@ -1282,11 +1282,11 @@ function playSound(type) {
 
 // ===== GAME LOOP =====
 function gameLoop(timestamp) {
+  requestAnimationFrame(gameLoop);
   const dt = timestamp - lastTime;
   lastTime = timestamp;
-  update(dt);
-  draw();
-  requestAnimationFrame(gameLoop);
+  try { update(dt); } catch(e) { console.error('update error:', e); }
+  try { draw(); } catch(e) { console.error('draw error:', e); }
 }
 
 // ===== START GAME =====
