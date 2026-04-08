@@ -178,7 +178,7 @@
 <body>
 
 <div id="title">🎮 TANK BATTLE</div>
-<div id="subtitle">CLASSIC ARCADE 1985</div>
+<div id="subtitle">CLASSIC ARCADE 1985 &nbsp;|&nbsp; v1.2</div>
 
 <div id="gameWrapper">
   <div id="canvasContainer">
@@ -1172,50 +1172,88 @@ const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playSound(type) {
   try {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
     const t = audioCtx.currentTime;
 
     switch (type) {
-      case 'shoot':
+      case 'shoot': {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
         osc.type = 'square';
         osc.frequency.setValueAtTime(800, t);
         osc.frequency.exponentialRampToValueAtTime(200, t + 0.08);
         gain.gain.setValueAtTime(0.15, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-        osc.start(t);
-        osc.stop(t + 0.08);
+        osc.start(t); osc.stop(t + 0.08);
         break;
-      case 'explosion':
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, t);
-        osc.frequency.exponentialRampToValueAtTime(30, t + 0.3);
-        gain.gain.setValueAtTime(0.3, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-        osc.start(t);
-        osc.stop(t + 0.3);
+      }
+      case 'explosion': {
+        const dur = 0.7;
+        // Layer 1: white noise burst (main impact)
+        const bufSize = audioCtx.sampleRate * dur;
+        const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1);
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buf;
+        const noiseGain = audioCtx.createGain();
+        const noiseFilter = audioCtx.createBiquadFilter();
+        noiseFilter.type = 'lowpass';
+        noiseFilter.frequency.setValueAtTime(1200, t);
+        noiseFilter.frequency.exponentialRampToValueAtTime(200, t + dur);
+        noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(audioCtx.destination);
+        noiseGain.gain.setValueAtTime(1.0, t);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        noise.start(t); noise.stop(t + dur);
+
+        // Layer 2: low bass thud
+        const bass = audioCtx.createOscillator();
+        const bassGain = audioCtx.createGain();
+        bass.connect(bassGain); bassGain.connect(audioCtx.destination);
+        bass.type = 'sine';
+        bass.frequency.setValueAtTime(120, t);
+        bass.frequency.exponentialRampToValueAtTime(40, t + 0.4);
+        bassGain.gain.setValueAtTime(0.8, t);
+        bassGain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+        bass.start(t); bass.stop(t + 0.4);
+
+        // Layer 3: high crackle
+        const crackle = audioCtx.createOscillator();
+        const crackleGain = audioCtx.createGain();
+        crackle.connect(crackleGain); crackleGain.connect(audioCtx.destination);
+        crackle.type = 'sawtooth';
+        crackle.frequency.setValueAtTime(300, t);
+        crackle.frequency.exponentialRampToValueAtTime(60, t + 0.2);
+        crackleGain.gain.setValueAtTime(0.4, t);
+        crackleGain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        crackle.start(t); crackle.stop(t + 0.2);
         break;
-      case 'metal':
+      }
+      case 'metal': {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
         osc.type = 'square';
         osc.frequency.setValueAtTime(400, t);
         osc.frequency.setValueAtTime(300, t + 0.03);
         gain.gain.setValueAtTime(0.1, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-        osc.start(t);
-        osc.stop(t + 0.1);
+        osc.start(t); osc.stop(t + 0.1);
         break;
-      case 'powerup':
+      }
+      case 'powerup': {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
         osc.type = 'sine';
         osc.frequency.setValueAtTime(440, t);
         osc.frequency.setValueAtTime(660, t + 0.1);
         osc.frequency.setValueAtTime(880, t + 0.2);
         gain.gain.setValueAtTime(0.2, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-        osc.start(t);
-        osc.stop(t + 0.35);
+        osc.start(t); osc.stop(t + 0.35);
         break;
+      }
     }
   } catch (e) {}
 }
