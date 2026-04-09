@@ -178,7 +178,7 @@
 <body>
 
 <div id="title">🎮 TANK BATTLE</div>
-<div id="subtitle">CLASSIC ARCADE 1985 &nbsp;|&nbsp; v1.7</div>
+<div id="subtitle">CLASSIC ARCADE 1985 &nbsp;|&nbsp; v1.8</div>
 
 <div id="gameWrapper">
   <div id="canvasContainer">
@@ -262,20 +262,20 @@ const DY = [-1, 0, 1, 0];
 
 // Colors
 const COLORS = {
-  bg: '#1a1a0a',
-  brick: '#c04000',
+  bg: '#000000',
+  brick: '#BC4A00',
   brickDark: '#802800',
-  steel: '#c8c8c8',
-  steelDark: '#888',
+  steel: '#FFFFFF',
+  steelDark: '#A8A8A8',
   water: ['#004488','#0055aa'],
   bush: '#006600',
   bushDark: '#004400',
   base: '#FFD700',
   baseDead: '#444',
-  player: '#44ff44',
-  playerDark: '#228822',
-  enemy: ['#ff4444','#ff8800','#ffffff'],
-  enemyDark: ['#882222','#884400','#888888'],
+  player: '#E4A400',
+  playerDark: '#905000',
+  enemy: ['#E0E0E0', '#44FF44', '#FFD700'],
+  enemyDark: ['#808080', '#008000', '#A04000'],
   bullet: '#ffff00',
   explosion: ['#ff0000','#ff6600','#ffaa00','#ffff00','#ffffff'],
   powerup: '#ff00ff',
@@ -316,33 +316,33 @@ const keys = {};
 
 // ===== MAP LAYOUTS =====
 const MAPS = [
-  // Level 1 - Basic (all BB, corridors min 2 cells)
+  // Level 1 - Basic (Classic Battle City Stage 1)
   `..........................
-..BB....BB....BB....BB....
-..BB....BB....BB....BB....
+..........................
+..BB..BB..BB..BB..BB..BB..
+..BB..BB..BB..BB..BB..BB..
+..BB..BB..BB..BB..BB..BB..
+..BB..BB..BB..BB..BB..BB..
+..BB..BB..BBSSBB..BB..BB..
+..BB..BB..BBSSBB..BB..BB..
+..BB..BB..BB..BB..BB..BB..
+..BB..BB..BB..BB..BB..BB..
+..BB..BB..........BB..BB..
+..BB..BB..........BB..BB..
+..........BB..BB..........
+..........BB..BB..........
+BBBB..BBBBBB..BBBBBB..BBBB
+BBBB..BBBBBB..BBBBBB..BBBB
 ..........................
 ..........................
-BB....BBBB....BBBB....BB..
-BB....BBBB....BBBB....BB..
-..........................
-..........................
-......BB....BB....BB......
-......BB....BB....BB......
-..........................
-..........................
-BB....BBBB....BBBB....BB..
-BB....BBBB....BBBB....BB..
-..........................
-..........................
-..BB....BB....BB....BB....
-..BB....BB....BB....BB....
-..........................
-..........................
-BB......BB....BB......BB..
-BB......BB....BB......BB..
-...........BBB............
-...........B*B............
-..........................`,
+..BB..BB..BBBBBB..BB..BB..
+..BB..BB..BBBBBB..BB..BB..
+..BB..BB..BB..BB..BB..BB..
+..BB..BB..BB..BB..BB..BB..
+..BB..BB..........BB..BB..
+..BB..BB...BBBB...BB..BB..
+..BB..BB...B**B...BB..BB..
+..BB..BB...B**B...BB..BB..`,
 
   // Level 2 - Medium (BB + SS mix)
   `..........................
@@ -367,10 +367,9 @@ BB....SS......SS......BB..
 ..........................
 ..........................
 BB......SS....SS......BB..
-BB......SS....SS......BB..
-...........BBB............
-...........B*B............
-..........................`,
+..BB..BB...BBBB...BB..BB..
+..BB..BB...B**B...BB..BB..
+..BB..BB...B**B...BB..BB..`,
 
   // Level 3 - Hard (SS heavy)
   `..........................
@@ -395,10 +394,9 @@ BB....SSBB....BBSS....BB..
 ..........................
 ..........................
 BB......SSSS..SSSS....BB..
-BB......SSSS..SSSS....BB..
-...........BBB............
-...........B*B............
-..........................`,
+..BB..BB...BBBB...BB..BB..
+..BB..BB...B**B...BB..BB..
+..BB..BB...B**B...BB..BB..`,
 ];
 
 function getMapLayout(lvl) {
@@ -939,27 +937,27 @@ function drawTile(r, c, tile) {
     case T.BRICK:
       ctx.fillStyle = COLORS.brick;
       ctx.fillRect(x, y, CELL, CELL);
-      ctx.fillStyle = COLORS.brickDark;
-      // Brick pattern
-      ctx.fillRect(x, y, CELL, 2);
-      ctx.fillRect(x, y + CELL - 2, CELL, 2);
-      ctx.fillRect(x, y, 2, CELL);
-      ctx.fillRect(x + CELL - 2, y, 2, CELL);
-      ctx.fillRect(x + CELL / 2 - 1, y, 2, CELL / 2);
-      ctx.fillRect(x, y + CELL / 2, 2, CELL / 2);
-      ctx.fillRect(x, y + CELL / 2, CELL, 2);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.globalAlpha = 0.8;
+      ctx.fillRect(x, y, CELL, 1);
+      ctx.fillRect(x, y + CELL / 2, CELL, 1);
+      ctx.fillRect(x + CELL / 2, y, 1, CELL / 2);
+      ctx.fillRect(x, y + CELL / 2, 1, CELL / 2);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(x + CELL - 1, y, 1, CELL / 2);
+      ctx.fillRect(x + CELL / 2 - 1, y + CELL / 2, 1, CELL / 2);
+      ctx.fillRect(x, y + CELL / 2 - 1, CELL, 1);
+      ctx.fillRect(x, y + CELL - 1, CELL, 1);
       break;
     case T.STEEL:
       ctx.fillStyle = COLORS.steel;
       ctx.fillRect(x, y, CELL, CELL);
       ctx.fillStyle = COLORS.steelDark;
-      ctx.fillRect(x, y, CELL, 2);
-      ctx.fillRect(x, y, 2, CELL);
+      ctx.fillRect(x + 2, y + 2, CELL - 4, CELL - 4);
+      ctx.fillStyle = '#000000';
       ctx.fillRect(x + CELL - 2, y, 2, CELL);
       ctx.fillRect(x, y + CELL - 2, CELL, 2);
-      // Center highlight
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(x + 4, y + 4, 5, 5);
       break;
     case T.WATER:
       ctx.fillStyle = COLORS.water[waterAnim];
@@ -974,16 +972,22 @@ function drawTile(r, c, tile) {
       // Draw on top layer (drawn later)
       break;
     case T.BASE:
-      // Star/Eagle base
-      ctx.fillStyle = baseAlive ? '#FFD700' : '#555';
-      ctx.fillRect(x, y, CELL, CELL);
-      ctx.fillStyle = baseAlive ? '#FF6600' : '#333';
-      ctx.fillRect(x + 3, y + 3, CELL - 6, CELL - 6);
-      ctx.fillStyle = baseAlive ? '#fff' : '#666';
-      ctx.fillRect(x + 7, y + 2, 6, 2);
-      ctx.fillRect(x + 7, y + 16, 6, 2);
-      ctx.fillRect(x + 2, y + 7, 2, 6);
-      ctx.fillRect(x + 16, y + 7, 2, 6);
+      // Since base is 2x2 cells, we only draw it at its top-left cell 
+      // which is usually at r=24, c=12 
+      if (r === ROWS - 2 && c === 12) {
+        ctx.fillStyle = baseAlive ? COLORS.brick : '#444';
+        ctx.fillRect(x, y, CELL * 2, CELL * 2);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(x + 2, y + 2, CELL * 2 - 4, CELL * 2 - 4);
+        ctx.fillStyle = baseAlive ? '#fff' : '#666';
+        ctx.fillRect(x + 10, y + 6, 20, 8);
+        ctx.fillRect(x + 16, y + 2, 8, 14);
+        ctx.fillRect(x + 10, y + 16, 20, 16);
+        ctx.fillStyle = baseAlive ? COLORS.brick : '#333';
+        ctx.fillRect(x + 14, y + 10, 12, 14);
+        ctx.fillStyle = baseAlive ? '#FF0' : '#444';
+        ctx.fillRect(x + 18, y + 14, 4, 4);
+      }
       break;
   }
 }
@@ -1019,35 +1023,43 @@ function drawTank(tank, isPlayer) {
 
   const hw = tank.w / 2, hh = tank.h / 2;
 
-  // Body
-  ctx.fillStyle = darkColor;
+  // Frame Background
+  ctx.fillStyle = '#000';
   ctx.fillRect(-hw, -hh, tank.w, tank.h);
-  ctx.fillStyle = baseColor;
-  ctx.fillRect(-hw + 2, -hh + 2, tank.w - 4, tank.h - 4);
 
-  // Tracks (animated)
+  // Tracks
   ctx.fillStyle = darkColor;
-  const trackOff = anim ? 2 : 0;
-  ctx.fillRect(-hw, -hh + trackOff, 4, hh * 2 - trackOff);
-  ctx.fillRect(-hw, -hh, 4, trackOff);
-  ctx.fillRect(hw - 4, -hh + trackOff, 4, hh * 2 - trackOff);
-  ctx.fillRect(hw - 4, -hh, 4, trackOff);
+  ctx.fillRect(-hw, -hh, 8, tank.h);
+  ctx.fillRect(hw - 8, -hh, 8, tank.h);
+
+  ctx.fillStyle = baseColor;
+  const trackOff = anim ? 4 : 0;
+  for (let i = 0; i < 5; i++) {
+    ctx.fillRect(-hw + 1, -hh + (i * 8 + trackOff) % tank.h, 6, 4);
+    ctx.fillRect(hw - 7, -hh + (i * 8 + trackOff) % tank.h, 6, 4);
+  }
+
+  // Central Body
+  ctx.fillStyle = darkColor;
+  ctx.fillRect(-8, -12, 16, 24);
+  ctx.fillStyle = baseColor;
+  ctx.fillRect(-6, -10, 12, 20);
 
   // Turret
-  ctx.fillStyle = darkColor;
-  ctx.fillRect(-4, -4, 8, 8);
+  ctx.fillStyle = "#A8A8A8"; // Slight silver/gray for classic turret base
+  ctx.fillRect(-4, -6, 8, 12);
   ctx.fillStyle = baseColor;
-  ctx.fillRect(-3, -3, 6, 6);
+  ctx.fillRect(-2, -4, 4, 8);
 
   // Gun barrel (pointing UP in local space)
   ctx.fillStyle = darkColor;
-  ctx.fillRect(-2, -hh - 4, 4, hh + 2);
-  ctx.fillStyle = baseColor;
-  ctx.fillRect(-1, -hh - 4, 2, hh + 2);
+  ctx.fillRect(-2, -hh, 4, hh - 6);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(-1, -hh, 2, hh - 6);
 
   // HP indicators for tier 2
   if (!isPlayer && tank.hp > 1) {
-    ctx.fillStyle = '#ff0';
+    ctx.fillStyle = '#fff';
     ctx.fillRect(-4, hh - 4, (tank.hp / tank.maxHp) * 8, 3);
   }
 
